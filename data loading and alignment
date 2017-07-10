@@ -65,3 +65,4 @@ def needle(path1,path2):
             delete = score[i-1][j] + gap_penalty(path1[i-1])
             insert = score[i][j-1] + gap_penalty(path2[j-1])
             score[i][j] = max(match, delete, insert)
+# to be continued.
