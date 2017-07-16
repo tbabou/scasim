@@ -101,8 +101,46 @@ def needle(path1,path2):
         j -= 1
         index += 1
     return(align1,align2)
+#now we can calculate the scasim scores
+def scasim1(dictionary): #this is for comparing all of the paths of a single participant
+    print(len(dictionary.keys()))
+    dissimilarity_matrix = np.zeros((len(dictionary.keys()),len(dictionary.keys())))
+    index1 = 0
+    for path in dictionary.values():
+        index2 = 0
+        for other_path in dictionary.values():
+            score = 0
+            aligned1, aligned2 = needle(path,other_path)
+            for i in range(aligned1.shape[0]):
+                score += substitution_penalty(aligned1.loc[i], aligned2.loc[i])
+            dissimilarity_matrix[index1,index2] = score
+            index2 +=1
+        index1 += 1
+        print(index1) #so I know the progress of the program
+    scasim = pd.DataFrame(dissimilarity_matrix)
+    return(scasim)
+#print(scasim1(cl277))
 
-print(needle(l173['2301'],l173['604']))
+def scasim2(dict1,dict2): #this is for comparing the paths of two different participants
+    dissimilarity_matrix = np.zeros((len(dict1.keys()),len(dict2.keys())))
+    index1 = 0
+    for path in dict1.values():
+        index2 = 0
+        for other_path in dict2.values():
+            score = 0
+            aligned1, aligned2 = needle(path, other_path)
+            for i in range(aligned1.shape[0]):
+                score += substitution_penalty(aligned1.loc[i], aligned2.loc[i])
+            dissimilarity_matrix[index1, index2] = score
+            index2 += 1
+        index1 += 1
+        print(index1) # so I know the progress of the program
+
+    scasim = pd.DataFrame(dissimilarity_matrix)
+    return (scasim)
+print(scasim2(l173,cl277))
+
+
 
 
 
