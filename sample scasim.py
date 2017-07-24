@@ -137,7 +137,7 @@ def scasim1(dictionary): #this is for comparing all of the paths of a single par
     scasim = pd.DataFrame(dissimilarity_matrix)
     #scasim.to_csv('scasim cl277.csv')
     return(scasim)
-print(scasim1(cl277))
+
 
 
 def scasim2(dict1,dict2): #this is for comparing the paths of two different participants
@@ -158,7 +158,7 @@ def scasim2(dict1,dict2): #this is for comparing the paths of two different part
     scasim = pd.DataFrame(dissimilarity_matrix)
     scasim.to_csv('scasim l173_cl277.csv')
     return (scasim)
-#print(scasim2(l173,cl277))
+
 
 
 
