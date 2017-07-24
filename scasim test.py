@@ -5,7 +5,7 @@ fixations = pd.read_csv('eyemovements.csv')
 scanpaths = {k:v for k,v in fixations.groupby('trial')}
 
 
-def substitution_penalty(fixation1,fixation2, normalize):
+def substitution_penalty(fixation1,fixation2):
     modulator = 0.83
     dur1, dur2 = float(fixation1['duration']), float(fixation2['duration'])
     total_dur = dur1+dur2
@@ -16,16 +16,8 @@ def substitution_penalty(fixation1,fixation2, normalize):
     if np.isnan(distance):
         distance = 0.0
     sub_score = (abs((dur1 - dur2))*modulator**distance) + ((dur1 + dur2))*(1 - modulator**distance)
-    if normalize:
-        return float(sub_score)/(1000*total_dur)
-    else:
-        return float(sub_score)
-def alignment_penalty(fixation1,fixation2):
-    modulator = 0.83
-    dur1, dur2 = float(fixation1['duration']), float(fixation2['duration'])
-    distance = abs(float(fixation1['x']) - float(fixation2['x']))
-    sub_score = abs((dur1 - dur2)) * modulator ** distance + ((dur1 + dur2)) * (1 - modulator ** distance)
-    return float(sub_score)
+    return sub_score,total_dur
+
 
 
 def gap_penalty(fixation):
@@ -45,7 +37,7 @@ def needle(path1,path2):
     # now to calculate the traceback matrix
     for i in range(1,m):
         for j in range(1, n):
-            match = score[i-1][j-1] - substitution_penalty(path1.ix[i-1],path2.ix[j-1],False)
+            match = score[i-1][j-1] - substitution_penalty(path1.ix[i-1],path2.ix[j-1])[0]
             delete = score[i-1][j] - gap_penalty(path1.ix[i-1])
             insert = score[i][j-1] - gap_penalty(path2.ix[j-1])
             score[i][j] = max(match, delete, insert)
@@ -59,7 +51,7 @@ def needle(path1,path2):
         score_up = score[i][j-1]
         score_left = score[i-1][j]
 
-        if score_current == score_diagonal - substitution_penalty(path1.ix[i-1],path2.ix[j-1],False):
+        if score_current == score_diagonal - substitution_penalty(path1.ix[i-1],path2.ix[j-1])[0]:
             align1.loc[index] = path1.ix[i-1]
             align2.loc[index] = path2.ix[j-1]
             i -= 1
@@ -87,7 +79,7 @@ def needle(path1,path2):
         index += 1
     return(align1,align2)
 
-def scasim1(dictionary): #this is for comparing all of the paths of a single participant
+def scasim1(dictionary, normalize): #this is for comparing all of the paths of a single participant
     print(len(dictionary.keys()))
     dissimilarity_matrix = np.zeros((len(dictionary.keys()),len(dictionary.keys())))
     index1 = 0
@@ -96,12 +88,18 @@ def scasim1(dictionary): #this is for comparing all of the paths of a single par
         for other_path in dictionary.values():
             if index1 != index2 and dissimilarity_matrix[index1,index2] == 0:
                 score = 0
+                total_duration = 0
                 aligned1, aligned2 = needle(path,other_path)
                 for i in range(aligned1.shape[0]):
                    # print(substitution_penalty(aligned1.loc[i], aligned2.loc[i], True))
-                    score += substitution_penalty(aligned1.loc[i], aligned2.loc[i], True)
-                dissimilarity_matrix[index1,index2] = score
-                dissimilarity_matrix[index2,index1] = score
+                    score += substitution_penalty(aligned1.loc[i], aligned2.loc[i])[0]
+                    total_duration += substitution_penalty(aligned1.loc[i], aligned2.loc[i])[1]
+                if normalize:
+                    dissimilarity_matrix[index1,index2] = score/total_duration
+                    dissimilarity_matrix[index2,index1] = score/total_duration
+                else:    
+                    dissimilarity_matrix[index1,index2] = score
+                    dissimilarity_matrix[index2,index1] = score
             index2 +=1
             print(index1,index2)
         index1 += 1
@@ -110,6 +108,5 @@ def scasim1(dictionary): #this is for comparing all of the paths of a single par
     #scasim.to_csv('scasim cl277.csv')
     return(scasim)
 
-print(scasim1(scanpaths))
-#print(needle(scanpaths[1],scanpaths[2]))
+
 
